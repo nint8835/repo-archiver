@@ -9,6 +9,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var Instance *Config
+
 func GetConfigPath() (string, error) {
 	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
@@ -28,22 +30,23 @@ func GetConfigPath() (string, error) {
 	return filepath.Join(appConfigFolder, "config.yaml"), nil
 }
 
-func Load() (Config, error) {
+func Load() error {
 	configPath, err := GetConfigPath()
 	if err != nil {
-		return Config{}, fmt.Errorf("error getting config path: %w", err)
+		return fmt.Errorf("error getting config path: %w", err)
 	}
 
 	configFile, err := os.Open(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			err = Save(Config{})
+			Instance = &Config{}
+			err = Save()
 			if err != nil {
-				return Config{}, fmt.Errorf("error saving config file: %w", err)
+				return fmt.Errorf("error saving config file: %w", err)
 			}
-			return Config{}, nil
+			return nil
 		}
-		return Config{}, fmt.Errorf("error opening config file: %w", err)
+		return fmt.Errorf("error opening config file: %w", err)
 	}
 
 	defer func() {
@@ -53,16 +56,15 @@ func Load() (Config, error) {
 		}
 	}()
 
-	var config Config
-	err = yaml.NewDecoder(configFile).Decode(&config)
+	err = yaml.NewDecoder(configFile).Decode(&Instance)
 	if err != nil {
-		return Config{}, fmt.Errorf("error decoding config file: %w", err)
+		return fmt.Errorf("error decoding config file: %w", err)
 	}
 
-	return config, nil
+	return nil
 }
 
-func Save(config Config) error {
+func Save() error {
 	configPath, err := GetConfigPath()
 	if err != nil {
 		return fmt.Errorf("error getting config path: %w", err)
@@ -80,7 +82,7 @@ func Save(config Config) error {
 		}
 	}()
 
-	err = yaml.NewEncoder(configFile).Encode(config)
+	err = yaml.NewEncoder(configFile).Encode(Instance)
 	if err != nil {
 		return fmt.Errorf("error encoding config file: %w", err)
 	}

@@ -13,12 +13,11 @@ import (
 )
 
 var logLevel string
-var configInst config.Config
 
 var rootCmd = &cobra.Command{
 	Use: "repo-archiver",
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info().Interface("config", configInst).Msg("loaded config")
+		log.Info().Interface("config", config.Instance).Msg("loaded config")
 	},
 }
 
@@ -32,8 +31,7 @@ func initLogging() {
 }
 
 func loadConfig() {
-	var err error
-	configInst, err = config.Load()
+	err := config.Load()
 	checkError(err, "failed to load config")
 }
 
