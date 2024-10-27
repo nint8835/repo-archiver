@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 
 	"github.com/charmbracelet/huh"
 	gh "github.com/cli/go-gh/v2/pkg/api"
@@ -19,7 +20,7 @@ var transferCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var sourceAccount string
 		var destinationAccount string
-		var repository string
+		var repoName string
 
 		var accountOptions []huh.Option[string]
 		for displayName := range config.Instance.Accounts {
@@ -37,7 +38,8 @@ var transferCmd = &cobra.Command{
 			repos, _, err := ghClient.Repositories.ListByUser(
 				context.Background(),
 				config.Instance.Accounts[sourceAccount].Name,
-				nil,
+				// TODO: Paginate properly
+				&github.RepositoryListByUserOptions{ListOptions: github.ListOptions{PerPage: 200}},
 			)
 			if err != nil {
 				log.Warn().Err(err).Msg("error listing repositories")
@@ -64,10 +66,38 @@ var transferCmd = &cobra.Command{
 				huh.NewSelect[string]().
 					OptionsFunc(repositoryOptionsFunc, &sourceAccount).
 					Title("Repository").
-					Value(&repository),
+					Value(&repoName),
 			),
 		).WithTheme(huh.ThemeCatppuccin()).Run()
 		checkError(err, "error prompting for transfer information")
+
+		ctx := context.Background()
+		ownerUsername := config.Instance.Accounts[sourceAccount].Name
+		shouldBeArchived := config.Instance.Accounts[destinationAccount].IsArchive
+		targetUsername := config.Instance.Accounts[destinationAccount].Name
+
+		log.Info().Msgf("Transferring %s from %s to %s", repoName, ownerUsername, targetUsername)
+
+		log.Debug().Msg("Getting current repository state")
+		repository, _, err := ghClient.Repositories.Get(ctx, ownerUsername, repoName)
+		checkError(err, "error getting repository")
+
+		if repository.GetArchived() != shouldBeArchived {
+			log.Debug().Msg("Archiving repository")
+			_, _, err = ghClient.Repositories.Edit(ctx, ownerUsername, repoName, &github.Repository{Archived: github.Bool(shouldBeArchived)})
+			checkError(err, "error archiving repository")
+			log.Debug().Msg("Repository archived")
+		}
+
+		log.Debug().Msg("Transferring repository to new owner")
+		_, _, err = ghClient.Repositories.Transfer(ctx, ownerUsername, repoName, github.TransferRequest{NewOwner: targetUsername})
+
+		var acceptedError *github.AcceptedError
+		if !errors.As(err, &acceptedError) {
+			checkError(err, "error transferring repository")
+		}
+
+		log.Info().Msg("Repository transferred successfully!")
 	},
 }
 
