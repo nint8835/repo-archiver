@@ -12,9 +12,9 @@ var accountsAddCmd = &cobra.Command{
 	Short: "Add a new account alias",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		var displayName string
-		var accountName string
-		var isArchive bool
+		displayName := ""
+		accountName := ""
+		isArchive := true
 
 		err := huh.NewForm(
 			huh.NewGroup(
