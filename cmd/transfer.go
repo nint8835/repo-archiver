@@ -34,20 +34,34 @@ var transferCmd = &cobra.Command{
 
 		repositoryOptionsFunc := func() []huh.Option[string] {
 			var repositoryOptions []huh.Option[string]
+			page := 1
+			hasMore := true
 
-			repos, _, err := ghClient.Repositories.ListByUser(
-				context.Background(),
-				config.Instance.Accounts[sourceAccount].Name,
-				// TODO: Paginate properly
-				&github.RepositoryListByUserOptions{ListOptions: github.ListOptions{PerPage: 200}},
-			)
-			if err != nil {
-				log.Warn().Err(err).Msg("error listing repositories")
-				return repositoryOptions
-			}
+			for hasMore {
+				repos, _, err := ghClient.Repositories.ListByUser(
+					context.Background(),
+					config.Instance.Accounts[sourceAccount].Name,
+					&github.RepositoryListByUserOptions{
+						ListOptions: github.ListOptions{
+							Page:    page,
+							PerPage: 100,
+						},
+					},
+				)
+				if err != nil {
+					log.Warn().Err(err).Msg("error listing repositories")
+					return repositoryOptions
+				}
 
-			for _, repo := range repos {
-				repositoryOptions = append(repositoryOptions, huh.NewOption(*repo.Name, *repo.Name))
+				for _, repo := range repos {
+					repositoryOptions = append(repositoryOptions, huh.NewOption(*repo.Name, *repo.Name))
+				}
+
+				if len(repos) < 100 {
+					hasMore = false
+				} else {
+					page++
+				}
 			}
 
 			return repositoryOptions
