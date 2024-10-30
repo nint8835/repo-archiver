@@ -98,13 +98,27 @@ var transferCmd = &cobra.Command{
 
 		if repository.GetArchived() != shouldBeArchived {
 			log.Debug().Msg("Archiving repository")
-			_, _, err = ghClient.Repositories.Edit(ctx, ownerUsername, repoName, &github.Repository{Archived: github.Bool(shouldBeArchived)})
+			_, _, err = ghClient.Repositories.Edit(
+				ctx,
+				ownerUsername,
+				repoName,
+				&github.Repository{
+					Archived: github.Bool(shouldBeArchived),
+				},
+			)
 			checkError(err, "error archiving repository")
 			log.Debug().Msg("Repository archived")
 		}
 
 		log.Debug().Msg("Transferring repository to new owner")
-		_, _, err = ghClient.Repositories.Transfer(ctx, ownerUsername, repoName, github.TransferRequest{NewOwner: targetUsername})
+		_, _, err = ghClient.Repositories.Transfer(
+			ctx,
+			ownerUsername,
+			repoName,
+			github.TransferRequest{
+				NewOwner: targetUsername,
+			},
+		)
 
 		var acceptedError *github.AcceptedError
 		if !errors.As(err, &acceptedError) {
