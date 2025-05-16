@@ -5,11 +5,11 @@ go 1.23.2
 require (
 	github.com/charmbracelet/huh v0.6.0
 	github.com/cli/go-gh/v2 v2.11.0
+	github.com/goccy/go-yaml v1.17.1
 	github.com/google/go-github/v66 v66.0.0
 	github.com/pterm/pterm v0.12.79
 	github.com/rs/zerolog v1.33.0
 	github.com/spf13/cobra v1.8.1
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -52,4 +52,5 @@ require (
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

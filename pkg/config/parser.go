@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/goccy/go-yaml"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 )
 
-var Instance *Config
+var Instance *Config = &Config{}
 
 func GetConfigPath() (string, error) {
 	userConfigDir, err := os.UserConfigDir()
@@ -56,7 +56,7 @@ func Load() error {
 		}
 	}()
 
-	err = yaml.NewDecoder(configFile).Decode(&Instance)
+	err = yaml.NewDecoder(configFile).Decode(Instance)
 	if err != nil {
 		return fmt.Errorf("error decoding config file: %w", err)
 	}
