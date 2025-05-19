@@ -38,10 +38,10 @@ var transferCmd = &cobra.Command{
 			hasMore := true
 
 			for hasMore {
-				repos, _, err := ghClient.Repositories.ListByUser(
+				reposResult, _, err := ghClient.Search.Repositories(
 					context.Background(),
-					config.Instance.Accounts[sourceAccount].Name,
-					&github.RepositoryListByUserOptions{
+					"org:"+config.Instance.Accounts[sourceAccount].Name,
+					&github.SearchOptions{
 						ListOptions: github.ListOptions{
 							Page:    page,
 							PerPage: 100,
@@ -52,6 +52,8 @@ var transferCmd = &cobra.Command{
 					log.Warn().Err(err).Msg("error listing repositories")
 					return repositoryOptions
 				}
+
+				repos := reposResult.Repositories
 
 				for _, repo := range repos {
 					repositoryOptions = append(repositoryOptions, huh.NewOption(*repo.Name, *repo.Name))
